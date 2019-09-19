@@ -74,6 +74,7 @@ import six
 from six.moves import range
 from six.moves import zip
 import tensorflow as tf
+import numpy as np
 
 from tensorflow.python.ops import control_flow_ops
 
@@ -1143,6 +1144,32 @@ def random_adjust_saturation(image,
     image = _augment_only_rgb_channels(image, _adjust_saturation)
     return image
 
+def random_gaussian_blur(image, sigma=2.0, size=5, probability=0.3, seed=None, preprocess_vars_cache=None):
+  def _gaussian_blur_image(image, sigma, size):
+    x_points = np.arange(-(size-1)//2,(size-1)//2+1,1)
+    y_points = x_points[::-1]
+    xs,ys = np.meshgrid(x_points,y_points)
+    kernel = np.exp(-(xs**2+ys**2)/(2*sigma**2))/(2*np.pi*sigma**2)
+    kernel = kernel/kernel.sum()
+    kernel = kernel[:, :, np.newaxis, np.newaxis]
+    image_r,image_g,image_b =tf.expand_dims(image[:,:,0],-1),tf.expand_dims(image[:,:,1],-1),tf.expand_dims(image[:,:,2],-1)
+    image_r_blur = tf.nn.conv2d(tf.expand_dims(image_r,0), kernel, strides=[1, 1, 1, 1], padding='SAME')
+    image_g_blur = tf.nn.conv2d(tf.expand_dims(image_g,0), kernel, strides=[1, 1, 1, 1], padding='SAME')
+    image_b_blur = tf.nn.conv2d(tf.expand_dims(image_b,0), kernel, strides=[1, 1, 1, 1], padding='SAME')
+    image_blur = tf.concat([image_r_blur,image_g_blur,image_b_blur],axis=3)
+    return tf.squeeze(image_blur, axis=0)
+
+  with tf.name_scope('RandomGaussianBlur', values=[image]):
+    # random variable defining whether to do flip or not
+    generator_func = functools.partial(tf.random_uniform, [], seed=seed)
+    do_a_gaussian_blur_random = _get_or_create_preprocess_rand_vars(
+        generator_func,
+        preprocessor_cache.PreprocessorCache.GAUSSIAN_BLUR,
+        preprocess_vars_cache)
+    do_a_gaussian_blur_random = tf.greater(do_a_gaussian_blur_random, probability)
+
+    image = tf.cond(do_a_gaussian_blur_random, lambda: image, lambda: _gaussian_blur_image(image, sigma, size))
+    return image
 
 def random_distort_color(image, color_ordering=0, preprocess_vars_cache=None):
   """Randomly distorts color.
@@ -3500,6 +3527,7 @@ def get_default_func_arg_map(include_label_weights=True,
       random_adjust_contrast: (fields.InputDataFields.image,),
       random_adjust_hue: (fields.InputDataFields.image,),
       random_adjust_saturation: (fields.InputDataFields.image,),
+      random_gaussian_blur: (fields.InputDataFields.image,),
       random_distort_color: (fields.InputDataFields.image,),
       random_jitter_boxes: (fields.InputDataFields.groundtruth_boxes,),
       random_crop_image: (fields.InputDataFields.image,

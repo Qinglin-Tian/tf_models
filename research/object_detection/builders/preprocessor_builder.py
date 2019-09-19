@@ -81,6 +81,8 @@ PREPROCESSING_FUNCTION_MAP = {
         preprocessor.random_rgb_to_gray,
     'random_adjust_brightness':
         preprocessor.random_adjust_brightness,
+    'random_gaussian_blur':
+        preprocessor.random_gaussian_blur,    
     'random_adjust_contrast':
         preprocessor.random_adjust_contrast,
     'random_adjust_hue':
@@ -157,6 +159,9 @@ def build(preprocessor_step_config):
 
   if step_type == 'random_rotation90':
     return (preprocessor.random_rotation90, {})
+
+  if step_type == 'random_gaussian_blur':
+    return (preprocessor.random_gaussian_blur,{})
 
   if step_type == 'random_crop_image':
     config = preprocessor_step_config.random_crop_image

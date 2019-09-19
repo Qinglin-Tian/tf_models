@@ -39,7 +39,15 @@ message PreprocessingStep {
     AutoAugmentImage autoaugment_image = 31;
     DropLabelProbabilistically drop_label_probabilistically = 32;
     RemapLabels remap_labels = 33;
+	RandomGaussianBlur random_gaussian_blur = 34;
   }
+}
+
+//Gaussian Blur image
+message RandomGaussianBlur {
+  optional float sigma = 1 [default=2.0];
+  optional int32 size = 2 [default=5];
+  optional float probability = 3 [default=0.3];
 }
 
 // Normalizes pixel values in an image.

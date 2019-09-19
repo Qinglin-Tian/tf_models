@@ -25,6 +25,13 @@ import tensorflow as tf
 from object_detection import model_hparams
 from object_detection import model_lib
 
+import mlflow
+import mlflow.tensorflow
+from tensorflow.python.saved_model import tag_constants
+import os
+
+mlflow.tensorflow.autolog()
+
 flags.DEFINE_string(
     'model_dir', None, 'Path to output model directory '
     'where event and checkpoint files will be written.')
@@ -103,6 +110,13 @@ def main(unused_argv):
 
     # Currently only a single Eval Spec is allowed.
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_specs[0])
+
+    # get saved model dir name
+    saved_model_dir = os.listdir(FLAGS.model_dir + "/export/Servo/")[0] 
+    mlflow.tensorflow.log_model(tf_saved_model_dir=os.path.join(FLAGS.model_dir,"export/Servo", saved_model_dir),
+				tf_meta_graph_tags=[tag_constants.SERVING],
+				tf_signature_def_key="serving_default",
+				artifact_path="model")
 
 
 if __name__ == '__main__':

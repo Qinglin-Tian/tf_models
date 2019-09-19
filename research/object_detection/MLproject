@@ -1,0 +1,4 @@
+name: object_detection
+entry_points:
+  main:
+    command: "python model_main.py"
