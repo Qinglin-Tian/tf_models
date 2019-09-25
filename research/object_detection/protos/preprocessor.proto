@@ -45,9 +45,7 @@ message PreprocessingStep {
 
 //Gaussian Blur image
 message RandomGaussianBlur {
-  optional float sigma = 1 [default=2.0];
-  optional int32 size = 2 [default=5];
-  optional float probability = 3 [default=0.3];
+  optional float probability = 1 [default=0.5];
 }
 
 // Normalizes pixel values in an image.
