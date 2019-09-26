@@ -1145,8 +1145,8 @@ def random_adjust_saturation(image,
     image = _augment_only_rgb_channels(image, _adjust_saturation)
     return image
 
-def random_gaussian_blur(image, sigma=2.0, size=5, probability=0.5, seed=None, preprocess_vars_cache=None):
-  def _gaussian_blur_image(image, sigma, size):
+def random_gaussian_blur(image, probability=0.5, seed=None, preprocess_vars_cache=None):
+  def _gaussian_blur_image(image):
     seq = iaa.Sequential([iaa.GaussianBlur(sigma=(0.0, 3.0))])
     image_blur = seq(images=image)
     return image_blur
@@ -1160,7 +1160,9 @@ def random_gaussian_blur(image, sigma=2.0, size=5, probability=0.5, seed=None, p
         preprocess_vars_cache)
     do_a_gaussian_blur_random = tf.greater(do_a_gaussian_blur_random, probability)
 
+    image_in_shape = image.get_shape()
     image = tf.cond(do_a_gaussian_blur_random, lambda: image, lambda: tf.py_func(_gaussian_blur_image, [image], tf.float32))
+    image.set_shape(image_in_shape)
     return image
 
 def random_distort_color(image, color_ordering=0, preprocess_vars_cache=None):
