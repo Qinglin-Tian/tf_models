@@ -66,7 +66,10 @@ FLAGS = flags.FLAGS
 def main(unused_argv):
   flags.mark_flag_as_required('model_dir')
   flags.mark_flag_as_required('pipeline_config_path')
-  config = tf.estimator.RunConfig(model_dir=FLAGS.model_dir)
+  cpu_config = tf.ConfigProto()
+  cpu_config.intra_op_parallelism_threads = 2
+  cpu_config.inter_op_parallelism_threads = 2
+  config = tf.estimator.RunConfig(model_dir=FLAGS.model_dir, session_config=cpu_config)
 
   train_and_eval_dict = model_lib.create_estimator_and_inputs(
       run_config=config,
@@ -112,7 +115,7 @@ def main(unused_argv):
     tf.estimator.train_and_evaluate(estimator, train_spec, eval_specs[0])
 
     # get saved model dir name
-    saved_model_dir = os.listdir(FLAGS.model_dir + "/export/Servo/")[0] 
+    saved_model_dir = os.listdir(FLAGS.model_dir + "/export/Servo/")[-1] 
     mlflow.tensorflow.log_model(tf_saved_model_dir=os.path.join(FLAGS.model_dir,"export/Servo", saved_model_dir),
 				tf_meta_graph_tags=[tag_constants.SERVING],
 				tf_signature_def_key="serving_default",
